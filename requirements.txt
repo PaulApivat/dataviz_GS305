@@ -1,4 +1,4 @@
 pandas
 matplotlib
 plotly
-
+nbformat>=4.2

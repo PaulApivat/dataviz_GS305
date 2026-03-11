@@ -17,7 +17,7 @@
 | 5 | Bubble | Access to clean fuels for cooking vs. GDP per capita (2023) | [grapher/access-to-clean-fuels-for-cooking-vs-gdp-per-capita](https://ourworldindata.org/grapher/access-to-clean-fuels-for-cooking-vs-gdp-per-capita) | Year 2023; **include interactive Plotly version** |
 | 6 | Bubble | Indoor air pollution death rate vs. access to clean fuels for cooking (2023) | [grapher/indoor-pollution-death-rates-clean-fuels](https://ourworldindata.org/grapher/indoor-pollution-death-rates-clean-fuels) | Year 2023; use for optional join notebook |
 
-**Data access:** OWID grapher charts have a “Download” option (CSV). Use the CSV URL for each chart so notebooks run in Colab without local files. If a chart combines multiple datasets (e.g. bubble), the export may be one combined CSV or we merge two OWID CSV sources (clean fuels + GDP; or death rate + clean fuels) in the notebook. Document the exact CSV source in a comment in each notebook (and cite OWID + original provider per their [Reuse](https://ourworldindata.org/grapher/access-to-clean-fuels-and-technologies-for-cooking#reuse) instructions). For robustness, keep small snapshot CSVs in `notebooks/data/` as a backup if an OWID URL changes, and designate one notebook section to show students how to locate and download the OWID CSV from the grapher interface.
+**Data access:** OWID grapher charts have a “Download” option (CSV) and table views. For this workshop, we treat those as the authoritative source, but to avoid runtime/API issues we work from **small CSV snapshots** stored under `notebooks/data/`. For each chart, we manually download or copy the relevant OWID table, filter to the required entities/years, and save a compact CSV (e.g. `clean_fuels.csv`, `indoor_pollution.csv`). All notebooks load from these snapshot CSVs (not live OWID URLs) and document the original OWID chart URLs and citations.
 
 ---
 
@@ -28,13 +28,11 @@ dataviz_GS305/
 ├── README.md
 ├── requirements.txt
 ├── notebooks/
-│   ├── 01_line_chart_clean_fuels.ipynb
-│   ├── 02_bar_chart_clean_fuels.ipynb
-│   ├── 03_line_chart_death_rate.ipynb
-│   ├── 04_bar_chart_death_rate.ipynb
-│   ├── 05_bubble_chart_clean_fuels_vs_gdp.ipynb   # + Plotly interactive
+│   ├── 01_line_chart_clean_fuels.ipynb              # line + bar
+│   ├── 03_line_chart_death_rate.ipynb               # line + bar
+│   ├── 05_bubble_chart_clean_fuels_vs_gdp.ipynb     # + Plotly interactive
 │   ├── 06_optional_join_bubble.ipynb
-│   └── data/                          # optional fallback CSVs if URLs change
+│   └── data/                                        # CSV snapshots for all charts
 ├── slides/
 │   └── (e.g. dataviz_lecture.pdf)
 └── .cursor/
@@ -83,84 +81,92 @@ Implement the same logic in each notebook (or in the shared snippet) so you can 
 
 ---
 
+### 3.3 Chart specification checklist (per chart / notebook)
+
+For more complex charts—especially interactive Plotly charts—start by writing a short **chart specification checklist** in a markdown cell inside the notebook before you fine-tune visuals. The checklist is based on the OWID chart and acts as a contract the code should satisfy.
+
+A typical checklist includes:
+
+- **Data subset and filters:** Which year(s), which countries, and how missing data are handled.
+- **Axes and ranges:** Linear vs log scale, expected tick values and labels, and y-axis range (e.g. 20–100% for access to clean fuels).
+- **Encodings:** Which column is mapped to x, y, color, bubble size, and text labels (e.g. color by `World region according to OWID`, bubble size from population, labels for countries above a population threshold).
+- **Interactivity:** Hover fields (e.g. Entity, Year, GDP per capita, indicator value, Population), legend behavior, and default zoom.
+- **Annotations / notes:** Any always-visible labels, explanatory notes (e.g. “Circles sized by population”), or OWID-specific design details.
+
+Workflow for new charts (especially 05 and 06):
+
+1. Inspect the OWID chart and write a markdown checklist that describes its behavior.
+2. Implement the Matplotlib / Plotly chart code to satisfy that checklist.
+3. When refining the chart, update the checklist first, then adjust the code.
+
+Notebook `05_bubble_chart_clean_fuels_vs_gdp.ipynb` already contains such a checklist for the interactive Plotly chart; use it as a template for future charts that need closer OWID matching.
+
+---
+
 ### 3.3 Notebook 01: `01_line_chart_clean_fuels.ipynb`
 
-- **Chart:** Share of population with access to clean fuels for cooking (line), countries THA, IDN, MMR, LAO, KHM, VNM, 1990–2023.
+- **Chart:** Share of population with access to clean fuels for cooking (line and bar), countries THA, IDN, MMR, LAO, KHM, VNM, using a workshop snapshot for **2000** and **2023**.
 - **OWID source:** [access-to-clean-fuels-and-technologies-for-cooking](https://ourworldindata.org/grapher/access-to-clean-fuels-and-technologies-for-cooking) (line, same filters).
-- **Data:** Load from OWID CSV URL (or `notebooks/data/` fallback). Filter to the six countries and year range.
+- **Data:** Snapshot CSV `notebooks/data/clean_fuels.csv` with one row per country (Thailand, Vietnam, Indonesia, Cambodia, Myanmar, Laos) and columns including 2000 and 2023 values and change metrics.
 - **Code flow:**
-  1. Markdown: goal (recreate OWID line chart, tidy data).
-  2. Imports: `pandas`, `matplotlib.pyplot`.
-  3. Load data (e.g. `pd.read_csv(owid_csv_url)`).
-  4. Inspect: `df.head()`, `df.info()` (tidy data discussion).
-  5. Prepare: select entities and years; ensure long format (e.g. one row per country-year).
-  6. Plot: one line per country, OWID-style colors and labels, title, source line.
+  1. Markdown: goal (recreate an OWID-style chart from a CSV snapshot; discuss tidy data).
+  2. Imports: `pandas`, `matplotlib.pyplot`, and apply OWID-inspired Matplotlib style (figure size, grid, light spines).
+  3. Load snapshot: `pd.read_csv("data/clean_fuels.csv")`.
+  4. Inspect: `df.head()`, `df.info()` to see wide format (country as rows, year columns).
+  5. Reshape to tidy long format:
+     - Melt year columns (e.g. 2000 and 2023) into `Year` and `clean_fuels_pct`.
+     - Strip `%` and convert to numeric.
+     - Rename `Country or region` → `Entity`.
+     - Map `Entity` to ISO `Code` (THA, VNM, IDN, KHM, MMR, LAO).
+  6. Filter / assert:
+     - Keep only the six codes and years {2000, 2023}.
+     - Assertions on `Code` set and min/max `Year` (== 2000 / 2023).
+  7. Plot line chart:
+     - One line per country using `clean_fuels_pct` vs `Year`.
+     - Label each line at its endpoint with the country name (no legend).
+     - OWID-style axes/title and a source line below the figure.
+  8. Plot bar chart (2023):
+     - Horizontal bar chart of 2023 `clean_fuels_pct` by country.
+     - Percentage labels (e.g. “86.8%”) at the end of each bar.
+     - Same source line and styling.
 - **Citation:** “Source: World Health Organization - Global Health Observatory (2025) – processed by Our World in Data”.
 
 ---
 
-### 3.4 Notebook 02: `02_bar_chart_clean_fuels.ipynb`
-
-- **Chart:** Same indicator, discrete bar, year 2023 only, same six countries.
-- **Data:** Same OWID dataset; filter to `year == 2023`, same countries.
-- **Code flow:** Same as 01 up to “prepare”; then bar plot (e.g. `ax.barh(countries, values)` or `ax.bar`), same style and source.
-- **Citation:** Same as 01.
-
----
-
-### 3.5 Notebook 03: `03_line_chart_death_rate.ipynb`
+### 3.4 Notebook 03: `03_line_chart_death_rate.ipynb`
 
 - **Chart:** Death rate from indoor air pollution (line), THA, VNM, IDN, KHM, MMR, LAO, earliest..2021.
 - **OWID source:** [death-rate-by-source-from-indoor-air-pollution](https://ourworldindata.org/grapher/death-rate-by-source-from-indoor-air-pollution) (line, same filters).
-- **Data:** Load from OWID CSV; filter to the six countries and time range.
-- **Code flow:** Same structure as 01 (load → inspect → filter → line plot). Unit: “deaths per 100,000 people”.
+- **Data:** Snapshot CSV `notebooks/data/indoor_pollution.csv` with one row per country–year (THA, VNM, IDN, KHM, MMR, LAO) and columns including year and death rate from indoor air pollution.
+- **Code flow:** Load snapshot, ensure tidy columns (`Entity`, `Code`, `Year`, `death_rate`), filter to target years/countries, plot one line per country (optionally label endpoints instead of using a legend).
 - **Citation:** “Source: IHME, Global Burden of Disease (2025) – with major processing by Our World in Data”.
 
 ---
 
-### 3.6 Notebook 04: `04_bar_chart_death_rate.ipynb`
-
-- **Chart:** Same death rate indicator, discrete bar, year 2021, same countries.
-- **Data:** Same as 03; filter to `year == 2021`.
-- **Code flow:** Same as 02 but with death rate data and unit on axis.
-- **Citation:** Same as 03.
-
----
-
-### 3.7 Notebook 05: `05_bubble_chart_clean_fuels_vs_gdp.ipynb`
+### 3.5 Notebook 05: `05_bubble_chart_clean_fuels_vs_gdp.ipynb`
 
 - **Chart:** Access to clean fuels for cooking vs. GDP per capita (2023), bubble chart. Plus **one interactive Plotly version** of this same chart.
 - **OWID source:** [access-to-clean-fuels-for-cooking-vs-gdp-per-capita](https://ourworldindata.org/grapher/access-to-clean-fuels-for-cooking-vs-gdp-per-capita).
-- **Data:** Either (a) one CSV from OWID for this chart (if available), or (b) merge clean-fuels CSV and GDP-per-capita CSV on country and year (2023). Bubble size: e.g. population (if in dataset) or constant for simplicity.
-- **Code flow:**
-  1. Markdown: scatter/bubble, two metrics, year 2023.
-  2. Imports: `pandas`, `matplotlib`, `plotly.express` (or `plotly.graph_objects`).
-  3. Load (and if needed merge) data for 2023.
-  4. Inspect and prepare (x = GDP per capita, y = clean fuels %, size = population or constant).
-  5. **Matplotlib:** `ax.scatter(x, y, s=...)` with OWID-like styling; label axes and add source.
-  6. **Plotly:** Same x/y/size; `fig.update_layout(...)` for similar look; show in notebook.
+- **Data:** Snapshot CSV `notebooks/data/clean_fuels_vs_gdp_per_capita.csv` with one row per country (or per country–year) including clean fuels (%) and GDP per capita for 2023, plus optional population.
+- **Code flow:** Load snapshot, ensure tidy columns (`Entity`, `Code`, `Year`, `clean_fuels_pct`, `gdp_per_capita`, optional `population`), filter to 2023, then:
+  - Matplotlib bubble: `clean_fuels_pct` vs `gdp_per_capita`, bubble size = population or constant, labels and source.
+  - Plotly version: same data with hover tooltips and interactive legend.
 - **Citation:** Clean fuels: WHO – OWID; GDP: use OWID’s stated source (e.g. World Bank – OWID) as on the chart page.
 
 ---
 
-### 3.8 Notebook 06: `06_optional_join_bubble.ipynb`
+### 3.6 Notebook 06: `06_optional_join_bubble.ipynb`
 
 - **Chart:** Indoor air pollution death rate vs. access to clean fuels for cooking (2023) — correlation bubble.
-- **Pedagogic goal:** Tidy data and joins: start from two “line chart” datasets (death rate by country-year; clean fuels by country-year), join on country and year, then plot one bubble chart (e.g. x = clean fuels %, y = death rate, size = population or constant).
-- **Data:** Same as 03 (death rate) and 01 (clean fuels). Filter both to 2023 (or latest common year), then `pd.merge(..., on=['country','year'])` (or equivalent entity/year columns).
-- **Code flow:**
-  1. Markdown: joining two datasets, long form, one row per country-year for plotting.
-  2. Load dataset 1 (clean fuels), filter to 2023.
-  3. Load dataset 2 (death rate), filter to 2023.
-  4. Merge on country (and year if needed); handle renames so columns are clear.
-  5. Inspect merged table (reinforce tidy: one row per observation).
-  6. Bubble plot: x = clean fuels %, y = death rate; same OWID-style styling and citations for both sources.
+- **Pedagogic goal:** Tidy data and joins: Have students start from two “line chart” datasets (death rate by country-year; clean fuels by country-year), join on country and year, then plot one bubble chart (e.g. x = clean fuels %, y = death rate, size = population or constant). As strictly a **backup benchmark**, use `notebooks/data/indoor_pollution_vs_clean_fuels_2023.csv` for the data to show what students output should look like. 
+- **Data:** Snapshot CSVs `notebooks/data/indoor_pollution.csv` and `notebooks/data/clean_fuels.csv` (or two long tables for death rate and clean fuels). Join on country code and year to get a tidy table with both indicators for 2021 as the last year available for both datasets. Then in a separate cell, use `notebooks/data/indoor_pollution_vs_clean_fuels_2023.csv` as a comparison bubble chart. 
+- **Code flow:** Load snapshots, keep tidy long format, merge on `Code` + `Year`, verify uniqueness and non-null indicators, then plot bubble (x = clean fuels %, y = death rate) with OWID-like styling and combined citation. Compare it to the backup benchmark. 
 
 ---
 
 ## 4. Colab and Portability
 
-- **No local paths:** Use only URLs for data (e.g. `pd.read_csv(owid_url)`) or paths relative to the notebook (e.g. `data/clean_fuels.csv` if you add fallback snapshot files). In Colab, if using relative paths, students can upload the repo or mount Drive and open from `notebooks/`.
+- **No local absolute paths:** Use paths relative to the notebook (e.g. `data/clean_fuels.csv`, `data/indoor_pollution.csv`) for the snapshot CSVs stored under `notebooks/data/`. In Colab, students can open the notebook from Drive or GitHub and keep the `data/` folder alongside it.
 - **Run order:** Each notebook should run “Run all” from top to bottom. Put data load and style setup early.
 - **README:** Add a short “Workshop” section: open each notebook in Google Colab (e.g. “Open in Colab” link if repo is on GitHub), run cells in order.
 
@@ -202,9 +208,9 @@ Implement the same logic in each notebook (or in the shared snippet) so you can 
 
 1. Create `requirements.txt` and folders: `notebooks/`, `notebooks/data/`, `slides/`.
 2. Resolve CSV URLs (or downloads) for: clean fuels, death rate, and (for 05) GDP per capita or combined bubble CSV.
-3. Implement **01** and **02** (clean fuels line + bar) and lock shared style.
-4. Implement **03** and **04** (death rate line + bar) reusing style.
-5. Implement **05** (bubble + Plotly interactive).
+3. Implement **01** (clean fuels line + bar) and lock shared style.
+4. Implement **03** (death rate line + bar) reusing style.
+5. Implement **05** (bubble + Plotly interactive), starting by writing a chart specification checklist in the notebook based on the OWID chart and then building Matplotlib and Plotly charts to satisfy that checklist.
 6. Implement **06** (join + bubble) with clear merge steps.
 7. Update README with workshop and Colab instructions.
 8. (Later) Add `docs/` and Jupyter Book config when converting to book.
@@ -213,8 +219,8 @@ Implement the same logic in each notebook (or in the shared snippet) so you can 
 
 ## 9. Code References (Snippets to Use)
 
-- **Line plot (01, 03):** Filter to entities and years; loop over entities or pivot so each entity is a column; `ax.plot(df['year'], df['entity1'])` etc., or `for entity in entities: ax.plot(...)`.
-- **Bar chart (02, 04):** Single-year slice; `ax.barh(df['Entity'], df['value'])` (or `ax.bar`); set color from palette by index.
+- **Line plot (01, 03):** Filter/reshape snapshot data to tidy long format (`Entity`, `Code`, `Year`, `value`), group by code, and plot with line labels at endpoints instead of a legend.
+- **Bar chart (01, 03):** Single-year slice from tidy table; `ax.barh(df['Entity'], df['value'])` (or `ax.bar`); add percentage/value labels at the end of each bar and keep OWID-style axes/title.
 - **Bubble (05, 06):** `ax.scatter(x, y, s=size_normalized, alpha=0.6, c=colors)`; add text labels for country codes/names if readable.
 - **Plotly (05):** `px.scatter(df, x='gdp_per_capita', y='clean_fuels_pct', size='population', hover_name='Entity', ...)` and `fig.update_layout(font=..., title=..., ...)`.
 - **Merge (06):** `pd.merge(df_clean_fuels, df_death_rate, on=['Entity','Year'], how='inner')` (adjust column names to match OWID CSV).
@@ -233,19 +239,18 @@ Track implementation progress. Update the Status column as you go: `⬜ Not star
 |------|----------------|--------|--------|
 | Dependencies | `requirements.txt` | ✅ Done | pandas, matplotlib, plotly |
 | Folders | `notebooks/`, `notebooks/data/`, `slides/` | ✅ Done | Created via mkdir |
-| Data URLs | Resolve OWID CSV URLs for all charts | ⬜ Not started | Clean fuels, death rate, GDP (05), merge keys for 06 |
-| Shared style | OWID-like matplotlib defaults | ⬜ Not started | Lock in 01/02, reuse in 03–06 |
+| Data snapshots | Prepare OWID-based CSV snapshots in `notebooks/data/` for all charts | ✅ Done | Clean fuels, GDP vs clean fuels, indoor pollution, and 2023 indoor pollution vs clean fuels snapshots created; verify join-ready format while implementing 06 |
+| Shared style | OWID-like matplotlib defaults | 🔄 In progress | Basic style applied in 01; reuse and refine in 02–06 |
 
 ### Notebooks
 
 | # | Notebook | Chart(s) | Status | Notes |
 |---|----------|----------|--------|--------|
-| 01 | `notebooks/01_line_chart_clean_fuels.ipynb` | Line: clean fuels (THA, IDN, MMR, LAO, KHM, VNM) | ⬜ Not started | Verifiable when: data covers 1990–2023 for all 6 countries and line chart visually matches OWID trend; add assertions that years and entities match expected sets. |
-| 02 | `notebooks/02_bar_chart_clean_fuels.ipynb` | Bar: clean fuels 2023 | ⬜ Not started | Verifiable when: single-year (2023) slice for all 6 countries and bar heights match OWID values within tolerance; add checks that only year 2023 is present and 6 rows exist. |
-| 03 | `notebooks/03_line_chart_death_rate.ipynb` | Line: death rate indoor air pollution | ⬜ Not started | Verifiable when: time series for 1990–2021 for all 6 countries plotted with correct units; add tests that min/max years and entity set match OWID export. |
-| 04 | `notebooks/04_bar_chart_death_rate.ipynb` | Bar: death rate 2021 | ⬜ Not started | Verifiable when: 2021 death rates for all 6 countries plotted; include assertion on year==2021 and row count, and spot-check one or two values. |
-| 05 | `notebooks/05_bubble_chart_clean_fuels_vs_gdp.ipynb` | Bubble: clean fuels vs GDP (2023) + Plotly | ⬜ Not started | Verifiable when: merged data contains expected columns (clean_fuels_pct, gdp_per_capita, optional population) for 2023 and bubble chart appears with non-empty points; add tests on column presence and non-null counts. |
-| 06 | `notebooks/06_optional_join_bubble.ipynb` | Join two datasets → bubble (death rate vs clean fuels) | ⬜ Not started | Verifiable when: join produces one row per country-year with both indicators and no unexpected duplicates; add tests on uniqueness of (entity, year), non-null indicator columns, and reasonable correlation direction. |
+
+| 01 | `notebooks/01_line_chart_clean_fuels.ipynb` | Line + bar: clean fuels snapshot (THA, IDN, MMR, LAO, KHM, VNM) | ✅ Done | Verifiable when: snapshot CSV is reshaped to tidy long format; Codes match the 6 expected countries; years exactly {2000, 2023}; line chart labels endpoints instead of legend; 2023 bar chart shows the same values with percentage labels. |
+| 03 | `notebooks/03_line_chart_death_rate.ipynb` | Line + bar: indoor air pollution death rate snapshot | ✅ Done | Verifiable when: tidy long table loaded from snapshot, Codes match the 6 expected countries, years exactly {1990, 2021}; line chart labels endpoints; 2021 bar chart shows the same values with unit on axis and optional value labels. |
+| 05 | `notebooks/05_bubble_chart_clean_fuels_vs_gdp.ipynb` | Bubble: clean fuels vs GDP (2023) + Plotly | ✅ Done | Verifiable when: 2023 data is filtered with non-null `clean_fuels_pct`, `gdp_per_capita`, and `Population`; Matplotlib bubble chart matches OWID-style axes/title and shows visible bubbles; Plotly chart uses log x-axis with specified ticks, colors by `World region according to OWID`, scales bubble size from population with clearly visible large countries (e.g. China, India), shows always-visible labels for larger countries, a custom hovertemplate (Entity, Year, GDP per capita, clean fuels %, Population), and the notebook includes a markdown checklist describing the intended OWID spec. |
+| 06 | `notebooks/06_optional_join_bubble.ipynb` | Join two datasets → bubble (death rate vs clean fuels) | ⬜ Not started | Verifiable when: join of snapshot tables produces one row per country-year with both indicators and no unexpected duplicates; add tests on uniqueness of (entity, year), non-null indicator columns, and reasonable correlation direction. |
 
 ### Wrap-up and optional
 
