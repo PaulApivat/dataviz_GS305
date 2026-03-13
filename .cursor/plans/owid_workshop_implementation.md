@@ -157,10 +157,21 @@ Notebook `05_bubble_chart_clean_fuels_vs_gdp.ipynb` already contains such a chec
 
 ### 3.6 Notebook 06: `06_optional_join_bubble.ipynb`
 
-- **Chart:** Indoor air pollution death rate vs. access to clean fuels for cooking (2023) — correlation bubble.
-- **Pedagogic goal:** Tidy data and joins: Have students start from two “line chart” datasets (death rate by country-year; clean fuels by country-year), join on country and year, then plot one bubble chart (e.g. x = clean fuels %, y = death rate, size = population or constant). As strictly a **backup benchmark**, use `notebooks/data/indoor_pollution_vs_clean_fuels_2023.csv` for the data to show what students output should look like. 
-- **Data:** Snapshot CSVs `notebooks/data/indoor_pollution.csv` and `notebooks/data/clean_fuels.csv` (or two long tables for death rate and clean fuels). Join on country code and year to get a tidy table with both indicators for 2021 as the last year available for both datasets. Then in a separate cell, use `notebooks/data/indoor_pollution_vs_clean_fuels_2023.csv` as a comparison bubble chart. 
-- **Code flow:** Load snapshots, keep tidy long format, merge on `Code` + `Year`, verify uniqueness and non-null indicators, then plot bubble (x = clean fuels %, y = death rate) with OWID-like styling and combined citation. Compare it to the backup benchmark. 
+- **Chart:** Indoor air pollution death rate vs. access to clean fuels for cooking (join exercise; 2000 & 2021 snapshots) — correlation bubble (interactive Plotly).
+- **Pedagogic goal:** Tidy data and joins: Have students start from two “line chart” datasets, reshape wide → long (tidy), join on country and year, then plot one interactive bubble chart (e.g. x = clean fuels %, y = death rate). As a **benchmark**, also plot a pre-joined comparison file for the same year so students can validate their merged output.
+- **Data (student join inputs):**
+  - `notebooks/data/clean_fuels_2000_2021.csv` (wide snapshot; `Country or region` + year columns)
+  - `notebooks/data/indoor_pollution_2000_2021.csv` (wide snapshot; `Country or region` + year columns)
+  - Both inputs must be reshaped with `melt()` into tidy long format (e.g. `Entity`, `Year`, `clean_fuels_pct` / `death_rate`) and mapped to ISO `Code` before joining.
+- **Join target:** Merge on `Code` + `Year` after mapping `Country or region` → `Entity` and adding ISO codes (same mapping pattern as notebooks 01/03). Years should be `{2000, 2021}`; optionally filter to `Year == 2021` right before plotting for a single-year bubble chart.
+- **Checklist workflow:** Reuse the **structure** of the chart specification checklist from notebook 05 as a template, then add a short **delta checklist** for this chart (new x/y variables, axis ranges/ticks, hover fields, label rules). The 05 checklist cannot be reused verbatim because the x/y semantics differ, but the workflow and checklist categories are the same.
+- **Plotly interactive chart (expected spec, high-level):**
+  - x-axis: `clean_fuels_pct` (linear; 0–100 with percent formatting)
+  - y-axis: `death_rate` (linear; unit: deaths per 100,000 people)
+  - labels: always-visible labels for “larger countries” (define a threshold explicitly for this notebook)
+  - hover: Entity, Year, clean fuels %, death rate (and Population/Region only if those columns exist in the joined table)
+- **Benchmark (comparison file):** `notebooks/data/indoor_pollution_vs_clean_fuels_2021.csv` (pre-joined benchmark to compare against the student-joined 2021 slice).
+- **Code flow:** Load both inputs, reshape to tidy long tables, add codes, merge on `Code` + `Year`, verify uniqueness and non-null indicators, then plot the interactive bubble chart with OWID-like styling and combined citation. In a separate section, load and plot the benchmark file and compare it to the student-joined 2021 results.
 
 ---
 
@@ -250,7 +261,7 @@ Track implementation progress. Update the Status column as you go: `⬜ Not star
 | 01 | `notebooks/01_line_chart_clean_fuels.ipynb` | Line + bar: clean fuels snapshot (THA, IDN, MMR, LAO, KHM, VNM) | ✅ Done | Verifiable when: snapshot CSV is reshaped to tidy long format; Codes match the 6 expected countries; years exactly {2000, 2023}; line chart labels endpoints instead of legend; 2023 bar chart shows the same values with percentage labels. |
 | 03 | `notebooks/03_line_chart_death_rate.ipynb` | Line + bar: indoor air pollution death rate snapshot | ✅ Done | Verifiable when: tidy long table loaded from snapshot, Codes match the 6 expected countries, years exactly {1990, 2021}; line chart labels endpoints; 2021 bar chart shows the same values with unit on axis and optional value labels. |
 | 05 | `notebooks/05_bubble_chart_clean_fuels_vs_gdp.ipynb` | Bubble: clean fuels vs GDP (2023) + Plotly | ✅ Done | Verifiable when: 2023 data is filtered with non-null `clean_fuels_pct`, `gdp_per_capita`, and `Population`; Matplotlib bubble chart matches OWID-style axes/title and shows visible bubbles; Plotly chart uses log x-axis with specified ticks, colors by `World region according to OWID`, scales bubble size from population with clearly visible large countries (e.g. China, India), shows always-visible labels for larger countries, a custom hovertemplate (Entity, Year, GDP per capita, clean fuels %, Population), and the notebook includes a markdown checklist describing the intended OWID spec. |
-| 06 | `notebooks/06_optional_join_bubble.ipynb` | Join two datasets → bubble (death rate vs clean fuels) | ⬜ Not started | Verifiable when: join of snapshot tables produces one row per country-year with both indicators and no unexpected duplicates; add tests on uniqueness of (entity, year), non-null indicator columns, and reasonable correlation direction. |
+| 06 | `notebooks/06_optional_join_bubble.ipynb` | Join two datasets → bubble (death rate vs clean fuels) | ✅ Done | Verifiable when: both wide snapshots (`clean_fuels_2000_2021.csv`, `indoor_pollution_2000_2021.csv`) are reshaped into tidy long format with `Entity`, `Code`, `Year`, and numeric indicators; join on (`Code`, `Year`) produces the expected six-country table for years {2000, 2021} with no duplicate keys and non-null `clean_fuels_pct` and `death_rate`; the joined Plotly chart for 2021 matches its checklist (0–100% x-axis, appropriate y range, labels, hover fields); and the benchmark Plotly chart built from `notebooks/data/indoor_pollution_vs_clean_fuels_2021.csv` uses all valid countries, applies OWID-style axes and color-by-region palette, labels only a specified subset of countries, and shows that the six workshop countries align with the joined 2021 results. |
 
 ### Wrap-up and optional
 
