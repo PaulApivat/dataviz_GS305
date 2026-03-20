@@ -267,6 +267,6 @@ Track implementation progress. Update the Status column as you go: `⬜ Not star
 
 | Item | File / action | Status | Notes |
 |------|----------------|--------|--------|
-| README | Workshop + Colab instructions | ⬜ Not started | |
+| README | Workshop + Colab instructions | ✅ Done | Added Workshop + Colab notes for Shared Drive setup, including `drive.mount(...)` and shortcut visibility requirements. |
 | Slides | Export from Canva → `slides/` | ⬜ Not started | PDF or PPT |
 | Jupyter Book | `docs/` with `_config.yml`, `_toc.yml`, intro, notebook chapters | ⬜ Not started | Later |
