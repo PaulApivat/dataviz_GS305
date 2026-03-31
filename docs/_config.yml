@@ -1,0 +1,10 @@
+title: GS305 Data Visualization Workshop
+author: GS305 Workshop Team
+only_build_toc_files: true
+
+execute:
+  execute_notebooks: off
+
+parse:
+  myst_enable_extensions:
+    - colon_fence

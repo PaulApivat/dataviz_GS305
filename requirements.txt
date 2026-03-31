@@ -2,3 +2,5 @@ pandas
 matplotlib
 plotly
 nbformat>=4.2
+jupyter-book<1
+ghp-import

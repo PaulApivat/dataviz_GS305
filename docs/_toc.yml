@@ -1,0 +1,7 @@
+format: jb-book
+root: intro
+chapters:
+  - file: 01_line_chart_clean_fuels
+  - file: 03_line_chart_death_rate
+  - file: 05_bubble_chart_clean_fuels_vs_gdp
+  - file: 06_optional_join_bubble

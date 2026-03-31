@@ -58,3 +58,49 @@ Fastest fix path:
    ```
 
 Once `os.chdir(base)` points to the `notebooks/` folder, the notebook-relative paths like `data/clean_fuels.csv` will resolve correctly.
+
+## Jupyter Book
+
+The repository includes a minimal Jupyter Book in `docs/` that publishes the four workshop notebooks as a single student-facing website.
+
+- `docs/intro.md`
+- `docs/01_line_chart_clean_fuels.ipynb`
+- `docs/03_line_chart_death_rate.ipynb`
+- `docs/05_bubble_chart_clean_fuels_vs_gdp.ipynb`
+- `docs/06_optional_join_bubble.ipynb`
+
+### Open locally
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+jupyter-book build docs/
+open docs/_build/html/index.html
+```
+
+### Publish to GitHub Pages
+
+1. Build the site:
+   ```bash
+   jupyter-book build docs/
+   ```
+2. Install deployment helper:
+   ```bash
+   pip install ghp-import
+   ```
+3. Publish the built HTML to `gh-pages`:
+   ```bash
+   ghp-import -n -p -f docs/_build/html
+   ```
+4. Share the Pages URL:
+   - `https://<github-username>.github.io/<repo-name>/`
+
+This gives students one stable URL without Colab path setup.
+
+### Plotly interactivity (offline-safe)
+
+The Plotly charts in the Jupyter Book are exported as self-contained HTML snippets with embedded Plotly JS. This means:
+
+- no `npm install` is required
+- no CDN dependency is required for chart interactivity
+- hover/zoom/pan still work in the built pages
