@@ -25,10 +25,14 @@ Guide the process of joining and reshaping Our World in Data (OWID) datasets for
   - `notebooks/06_optional_join_bubble.ipynb`
   - Potentially `notebooks/05_bubble_chart_clean_fuels_vs_gdp.ipynb` if it uses a join.
 - Data sources:
-  - OWID grapher CSVs for:
+  - Local snapshot CSVs in `notebooks/data/` derived from OWID for:
     - Access to clean fuels for cooking.
     - Death rate from indoor air pollution.
     - GDP per capita (if applicable).
+  - In this repo's current workflow, notebook 06 primarily uses:
+    - `notebooks/data/clean_fuels_2000_2021.csv`
+    - `notebooks/data/indoor_pollution_2000_2021.csv`
+    - Benchmark: `notebooks/data/indoor_pollution_vs_clean_fuels_2021.csv`
 
 ## Behavior and Guidelines
 
@@ -105,8 +109,8 @@ Guide the process of joining and reshaping Our World in Data (OWID) datasets for
 
 7. **Colab and reproducibility**
    - Use:
-     - OWID CSV URLs as primary sources.
-     - Or relative paths to small CSVs in `notebooks/data/` as fallback (if URLs change).
+     - Relative paths to small CSVs in `notebooks/data/` as primary workshop inputs.
+     - OWID URLs for provenance/citation, not as required runtime dependencies.
    - No local absolute paths.
    - Ensure a fresh Colab kernel can:
      - Run all cells in order.

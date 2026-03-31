@@ -58,11 +58,12 @@ Design and maintain Jupyter notebooks in this repo so they are consistent, pedag
    - Ensure each notebook:
      - Can be run from top to bottom with “Run all” in Colab.
      - Uses only:
-       - URLs (e.g. OWID CSVs).
-       - Or paths relative to the notebook directory (e.g. `data/clean_fuels.csv`).
+       - Paths relative to the notebook directory (e.g. `data/clean_fuels.csv`) for workshop datasets.
+       - Optional source URLs for attribution/provenance only.
    - Avoid:
      - `~/Desktop/...` or other absolute paths.
      - Dependencies that are unlikely to be available in Colab without clear install cells.
+   - For Shared Drive classroom delivery, include a short setup snippet near the top (`drive.mount(...)` + `os.chdir(...)`) so `data/...` paths resolve consistently.
 
 4. **Pedagogy and readability**
    - Prioritize **clarity over cleverness**:

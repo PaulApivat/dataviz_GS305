@@ -19,9 +19,7 @@ Help recreate Our World in Data (OWID) charts (line, bar, bubble) as faithfully 
   - `.cursor/plans/owid_workshop_implementation.md`
 - Notebooks (once created):
   - `notebooks/01_line_chart_clean_fuels.ipynb`
-  - `notebooks/02_bar_chart_clean_fuels.ipynb`
   - `notebooks/03_line_chart_death_rate.ipynb`
-  - `notebooks/04_bar_chart_death_rate.ipynb`
   - `notebooks/05_bubble_chart_clean_fuels_vs_gdp.ipynb`
   - `notebooks/06_optional_join_bubble.ipynb`
 
@@ -47,11 +45,11 @@ Help recreate Our World in Data (OWID) charts (line, bar, bubble) as faithfully 
    - Note the source text and provider (e.g. WHO GHO, IHME GBD) from the “Sources & processing”/“Reuse this work” sections on OWID.
 
 3. **Data loading strategy**
-   - Prefer **CSV from OWID** via `pd.read_csv(owid_csv_url)`.
-   - If the specific CSV URL is unknown:
-     - Ask the user for:
-       - The CSV URL (from OWID’s “Download”).
-       - Or permission to assume a standard grapher CSV path.
+   - Prefer **local snapshot CSVs in `notebooks/data/`** for reproducibility in class and Colab.
+     - Example: `pd.read_csv("data/clean_fuels.csv")`.
+   - Treat OWID grapher/table URLs as the source of truth for citation and spec matching, but do not rely on live URL reads during workshop execution.
+   - If a required snapshot file is missing:
+     - Ask the user to create/export it first from OWID and save it under `notebooks/data/`.
    - When a bubble chart requires multiple datasets:
      - Either use OWID’s already-combined CSV (if available).
      - Or plan a **merge**:
@@ -62,7 +60,7 @@ Help recreate Our World in Data (OWID) charts (line, bar, bubble) as faithfully 
    - For a new chart notebook, follow this pattern:
      1. Markdown: chart title, question, and brief explanation.
      2. Imports: `pandas`, `matplotlib.pyplot`, and `plotly.express` if interactive.
-     3. Data loading cell: `pd.read_csv(owid_url)`.
+    3. Data loading cell: `pd.read_csv("data/<snapshot>.csv")`.
      4. Data inspection cell: `head()`, `info()`, basic summaries.
      5. Data preparation:
         - Filter by countries/entities and year range.
@@ -101,8 +99,9 @@ Help recreate Our World in Data (OWID) charts (line, bar, bubble) as faithfully 
 
 7. **Teaching and Colab compatibility**
    - Ensure:
-     - No absolute local paths (only URLs or simple relative paths).
+     - No absolute local paths; use simple relative paths like `data/...`.
      - Cells can be run top-to-bottom with a “Run all” in Colab.
+   - For shared Google Drive usage in Colab, ensure the notebook includes or references a path-setup step (`drive.mount(...)` + `os.chdir(...)`) before data-loading cells.
    - Favor explicit, step-by-step code over heavy abstraction; students should see clearly:
      - Where the data comes from.
      - How it’s filtered/transformed.
